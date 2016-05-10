@@ -1,21 +1,19 @@
-public class Client {
+public class Client implements Runnable {
 
     private volatile boolean hairCut = false;
 
     public int order;
     private String name;
+    private BarberShop barberShop;
+
+    public Client(String name, BarberShop barberShop) {
+        this.name = name;
+        this.barberShop = barberShop;
+    }
 
     @Override
-    public String toString() {
-        return name;
-    }
-
-    public Client(String name) {
-        this.name = name;
-    }
-
-    public void enter(BarberShop barberShop) {
-        barberShop.enterShop(this);
+    public void run() {
+        this.barberShop.enterShop(this);
     }
 
     public void cut() {
@@ -24,6 +22,11 @@ public class Client {
 
     public boolean hasHairCut() {
         return hairCut;
+    }
+
+    @Override
+    public String toString() {
+        return name;
     }
 }
 

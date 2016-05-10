@@ -1,57 +1,37 @@
 import java.util.Optional;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class Barber implements Runnable {
 
-    public static final int TIME_TO_CUT = 10;
+    public static final int TIME_TO_CUT = 20;
     private volatile Optional<Client> currentClient = Optional.empty();
     private int order;
 
     private final BarberShop shop;
-    private volatile boolean sleep;
+    private ReentrantLock barberLock = new ReentrantLock();
 
     public Barber(BarberShop shop) {
         this.shop = shop;
-        new Thread(this).start();
-    }
-
-    public boolean welcome(Client client) {
-        synchronized (shop) {
-            if (currentClient.isPresent()) {
-                return false;
-            }
-
-            this.currentClient = Optional.of(client);
-            this.wakeUp();
-            System.out.println("Hey welcome new client wakingUp " + client);
-            return true;
-        }
-    }
-
-    private void wakeUp() {
-        sleep = false;
+        new Thread(this, "BarberThread").start();
     }
 
     @Override
-    public void run() {
+    public synchronized void run() {
         while (true) {
-            while(sleep) {
+            checkWaitingRoom();
+            while (!currentClient.isPresent()) {
                 waiting(10);
             }
-            synchronized (shop) {
-                checkNextClient();
-                currentClient.ifPresent(client -> {
-                                            cut(client);
-                                            sayByeTo(client);
-                                            checkTimeToSleep();
-                                        }
-                );
-            }
+            currentClient.ifPresent(client -> {
+                                        cut(client);
+                                        sayByeTo(client);
+                                    }
+            );
         }
     }
 
-    private void checkNextClient() {
-        if (!currentClient.isPresent()) {
-            currentClient = shop.nextClient();
+    private void checkWaitingRoom() {
+        if (acceptNewClient(shop.nextClient())) {
             currentClient.ifPresent(c -> System.out.println("Welcome waiting client " + c));
         }
     }
@@ -66,12 +46,22 @@ public class Barber implements Runnable {
 
     private void sayByeTo(Client client) {
         System.out.println("Bye " + client);
+        currentClient = Optional.empty();
     }
 
-    private void checkTimeToSleep() {
-        currentClient = shop.nextClient();
-        if(!currentClient.isPresent())
-            sleep = true;
+    public boolean acceptNewClient(Optional<Client> client) {
+        try {
+            barberLock.lock();
+            if (!currentClient.isPresent()) {
+                System.out.println("Hey welcome new client " + client);
+                currentClient = client;
+                return true;
+            }
+
+            return false;
+        } finally {
+            barberLock.unlock();
+        }
     }
 
     private void waiting(int timeToWait) {

@@ -29,10 +29,10 @@ public class BarberShopTest {
     @Test
     public void should_accept_new_client() throws Exception {
         // Given
-        Client client = new Client("C");
+        Client client = new Client("C", barberShop);
 
         // When
-        client.enter(barberShop);
+        client.run();
 
         // Then
         Thread.sleep(100);
@@ -44,12 +44,12 @@ public class BarberShopTest {
     @Test
     public void should_send_second_client_in_wainting_room() throws Exception {
         // Given
-        Client client1 = new Client("C1");
-        Client client2 = new Client("C2");
+        Client client1 = new Client("C1", barberShop);
+        Client client2 = new Client("C2", barberShop);
 
         // When
-        client1.enter(barberShop);
-        client2.enter(barberShop);
+        client1.run();
+        client2.run();
 
         Thread.sleep(200);
 
@@ -67,16 +67,18 @@ public class BarberShopTest {
     @Test
     public void should_keep_client_order() throws Exception {
         // Given
-        Client client1 = new Client("C1");
-        Client client2 = new Client("C2");
-        Client client3 = new Client("C3");
+        Client client1 = new Client("C1", barberShop);
+        Client client2 = new Client("C2", barberShop);
+        Client client3 = new Client("C3", barberShop);
+
+        Thread.sleep(50);
 
         // When
-        client1.enter(barberShop);
-        client2.enter(barberShop);
-        client3.enter(barberShop);
+        client1.run();
+        client2.run();
+        client3.run();
 
-        Thread.sleep(300);
+        Thread.sleep(600);
 
         // Then
         System.out.println("Test client1 " + client1 + " has hair " + client1.hasHairCut());
@@ -92,36 +94,39 @@ public class BarberShopTest {
         assertThat(client3.order).isEqualTo(2);
     }
 
-//    @Test
-//    public void should_reject_when_too_many_clients_are_waiting() throws Exception {
-//        // Given
-//        Client client1 = new Client();
-//        Client client2 = new Client();
-//        Client client3 = new Client();
-//        Client client4 = new Client();
-//
-//        // When
-//        client1.enter(barberShop);
-//        client2.enter(barberShop);
-//        client3.enter(barberShop);
-//        client4.enter(barberShop);
-//
-//        Thread.sleep(400);
-//
-//        // Then
-//        System.out.println("Test client1 " + client1 + " has hair " + client1.hasHairCut());
-//        assertThat(client1.hasHairCut()).isTrue();
-//        assertThat(client1.order).isEqualTo(0);
-//
-//        System.out.println("Test client2 " + client2 + " has hair " + client2.hasHairCut());
-//        assertThat(client2.hasHairCut()).isTrue();
-//        assertThat(client2.order).isEqualTo(1);
-//
-//        System.out.println("Test client3 " + client3 + " has hair " + client3.hasHairCut());
-//        assertThat(client1.hasHairCut()).isTrue();
-//        assertThat(client1.order).isEqualTo(2);
-//
-//        System.out.println("Test client4 " + client4 + " has hair " + client4.hasHairCut());
-//        assertThat(client4.hasHairCut()).isFalse();
-//    }
+    @Test
+    public void should_reject_when_too_many_clients() throws Exception {
+        // Given
+        Client client1 = new Client("C1", barberShop);
+        Client client2 = new Client("C2", barberShop);
+        Client client3 = new Client("C3", barberShop);
+        Client client4 = new Client("C4", barberShop);
+
+        Thread.sleep(50);
+
+        // When
+        client1.run();
+        client2.run();
+        client3.run();
+        client4.run();
+
+        Thread.sleep(600);
+
+        // Then
+        System.out.println("Test client1 " + client1 + " has hair " + client1.hasHairCut());
+        assertThat(client1.hasHairCut()).isTrue();
+        assertThat(client1.order).isEqualTo(0);
+
+        System.out.println("Test client2 " + client2 + " has hair " + client2.hasHairCut());
+        assertThat(client2.hasHairCut()).isTrue();
+        assertThat(client2.order).isEqualTo(1);
+
+        System.out.println("Test client3 " + client3 + " has hair " + client3.hasHairCut());
+        assertThat(client3.hasHairCut()).isTrue();
+        assertThat(client3.order).isEqualTo(2);
+
+        assertThat(client4.hasHairCut()).isFalse();
+    }
+
+
 }
