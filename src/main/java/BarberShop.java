@@ -7,7 +7,6 @@ public class BarberShop {
 
     public static final int MAX_WAITING_ROOM_SIZE = 2;
     private ReentrantLock clientLock = new ReentrantLock();
-    ;
 
     public void setBarber(Barber barber) {
         this.barber = barber;
