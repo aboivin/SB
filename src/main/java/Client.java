@@ -1,41 +1,53 @@
-import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.BrokenBarrierException;
+import java.util.concurrent.CyclicBarrier;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Client implements Runnable {
+
+    private static final Logger logger = LoggerFactory.getLogger(Client.class);
 
     private volatile boolean hairCut = false;
 
     public int order;
     private String name;
     private BarberShop barberShop;
-    private CountDownLatch latch;
+    private CyclicBarrier startBarrier;
+    public CyclicBarrier midBarrier;
 
     public Client(String name, BarberShop barberShop) {
         this.name = name;
         this.barberShop = barberShop;
     }
 
-    public Client(String name, BarberShop barberShop, CountDownLatch latch) {
+    public Client(String name, BarberShop barberShop, CyclicBarrier latch) {
         this.name = name;
         this.barberShop = barberShop;
-        this.latch = latch;
+        this.startBarrier = latch;
+    }
+
+    public Client(String name, BarberShop barberShop, CyclicBarrier latch, CyclicBarrier midBarrier) {
+        this.name = name;
+        this.barberShop = barberShop;
+        this.midBarrier = midBarrier;
+        this.startBarrier = latch;
     }
 
     @Override
     public void run() {
-        if(latch != null) {
-            latch.countDown();
-            await(latch);
-            System.out.println(this + "latch over");
+        if (startBarrier != null) {
+            await(startBarrier);
+            logger.debug(this + "startBarrier is open");
         }
 
         this.barberShop.enterShop(this);
     }
 
-    private void await(CountDownLatch latch) {
+    private void await(CyclicBarrier barrier) {
         try {
-            latch.await();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            barrier.await();
+        } catch (BrokenBarrierException | InterruptedException e) {
+            logger.error("Barrier broken", e);
         }
     }
 

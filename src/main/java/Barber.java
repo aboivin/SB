@@ -1,7 +1,12 @@
 import java.util.Optional;
+import java.util.concurrent.CyclicBarrier;
 import java.util.concurrent.locks.ReentrantLock;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Barber implements Runnable {
+
+    private static final Logger logger = LoggerFactory.getLogger(Barber.class);
 
     public static final int TIME_TO_CUT = 20;
     private volatile Optional<Client> currentClient = Optional.empty();
@@ -9,22 +14,33 @@ public class Barber implements Runnable {
 
     private final BarberShop shop;
     private ReentrantLock barberLock = new ReentrantLock();
+    private CyclicBarrier barrier;
 
     public Barber(BarberShop shop) {
         this.shop = shop;
         new Thread(this, "BarberThread").start();
     }
 
+    public Barber(BarberShop shop, CyclicBarrier barrier) {
+        this.shop = shop;
+        this.barrier = barrier;
+        new Thread(this, "BarberThread").start();
+    }
+
     @Override
-    public synchronized void run() {
+    public void run() {
         while (true) {
             checkWaitingRoom();
+
+            Utils.await(barrier);
+
             while (!currentClient.isPresent()) {
                 waiting(10);
+                logger.debug("sleeping");
             }
             currentClient.ifPresent(client -> {
                                         cut(client);
-                                        sayByeTo(client);
+                                        sayByeToClient();
                                     }
             );
         }
@@ -32,20 +48,19 @@ public class Barber implements Runnable {
 
     private void checkWaitingRoom() {
         if (acceptNewClient(shop.nextClient())) {
-            currentClient.ifPresent(c -> System.out.println("Welcome waiting client " + c));
+            currentClient.ifPresent(c -> logger.debug("Welcome waiting client " + c));
         }
     }
 
     private void cut(Client client) {
-        System.out.println("Cutting hair of " + client + " on " + Thread.currentThread().getName());
+        logger.debug("Cutting hair of " + client + " on " + Thread.currentThread().getName());
         waiting(TIME_TO_CUT);
         client.cut();
-        System.out.println("client " + client + "cut " + client.hasHairCut());
+        logger.debug("client " + client + "cut " + client.hasHairCut());
         client.order = order++;
     }
 
-    private void sayByeTo(Client client) {
-        System.out.println("Bye " + client);
+    private void sayByeToClient() {
         currentClient = Optional.empty();
     }
 
@@ -53,7 +68,6 @@ public class Barber implements Runnable {
         try {
             barberLock.lock();
             if (!currentClient.isPresent()) {
-                System.out.println("Hey welcome new client " + client);
                 currentClient = client;
                 return true;
             }
