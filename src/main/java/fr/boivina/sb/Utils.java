@@ -1,3 +1,5 @@
+package fr.boivina.sb;
+
 import java.util.concurrent.BrokenBarrierException;
 import java.util.concurrent.CyclicBarrier;
 import org.slf4j.Logger;

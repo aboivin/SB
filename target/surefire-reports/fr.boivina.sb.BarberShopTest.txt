@@ -1,0 +1,11 @@
+-------------------------------------------------------------------------------
+Test set: fr.boivina.sb.BarberShopTest
+-------------------------------------------------------------------------------
+Tests run: 4, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 2.634 sec <<< FAILURE! - in fr.boivina.sb.BarberShopTest
+should_reject_when_too_many_clients[0](fr.boivina.sb.BarberShopTest)  Time elapsed: 0.911 sec  <<< FAILURE!
+org.junit.ComparisonFailure: expected:<[tru]e> but was:<[fals]e>
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance0(Native Method)
+	at sun.reflect.NativeConstructorAccessorImpl.newInstance(NativeConstructorAccessorImpl.java:62)
+	at sun.reflect.DelegatingConstructorAccessorImpl.newInstance(DelegatingConstructorAccessorImpl.java:45)
+	at fr.boivina.sb.BarberShopTest.should_reject_when_too_many_clients(BarberShopTest.java:110)
+
