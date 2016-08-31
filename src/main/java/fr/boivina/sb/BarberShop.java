@@ -26,7 +26,7 @@ public class BarberShop {
 
     private synchronized boolean newClientIsAccepted(Client client) {
         if (waitingRoom.isFull()) {
-            logger.debug("Waiting room is full for client %s", client);
+            logger.debug("Waiting room is full for client {}", client);
             return false;
         }
 

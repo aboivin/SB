@@ -21,6 +21,7 @@ public class Barber implements Runnable {
     }
 
     public void wakeUp() {
+        logger.info("Barber woken up !");
         sleeping = false;
     }
 

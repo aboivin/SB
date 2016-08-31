@@ -5,16 +5,16 @@ import java.util.Queue;
 
 public class WaitingRoom {
 
-    private final WaitingRoomSize waitingRoomSize;
+    private final int waitingRoomSize;
 
     private final Queue<Client> waitingQueue = new ArrayDeque<>();
 
-    public WaitingRoom(WaitingRoomSize waitingRoomSize) {
+    public WaitingRoom(int waitingRoomSize) {
         this.waitingRoomSize = waitingRoomSize;
     }
 
     public boolean isFull() {
-        return waitingRoomSize.isFull(waitingQueue.size());
+        return waitingRoomSize == waitingQueue.size();
     }
 
     public boolean isEmpty() {

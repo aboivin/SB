@@ -3,7 +3,9 @@ package fr.boivina.sb;
 import static org.assertj.core.api.StrictAssertions.assertThat;
 import java.util.Arrays;
 import java.util.List;
-
+import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -23,7 +25,7 @@ public class BarberShopTest {
     @Before
     public void init_barber() throws Exception {
         barber = new Barber();
-        WaitingRoom waitingRoom = new WaitingRoom(new WaitingRoomSize(2));
+        WaitingRoom waitingRoom = new WaitingRoom(2);
         barberShop = new BarberShop(barber, waitingRoom);
         barber.setBarberShop(barberShop);
         Thread.sleep(30);
@@ -96,6 +98,7 @@ public class BarberShopTest {
         Client client3 = new Client(barberShop);
         Client client2 = new Client(barberShop);
         Client client4 = new Client(barberShop);
+        new Thread(barber).start();
 
         Thread.sleep(50);
 
@@ -112,15 +115,18 @@ public class BarberShopTest {
         assertThat(client3.hasHairCut()).isTrue();
         assertThat(client4.hasHairCut()).isFalse();
     }
-    /*
 
     @Test
     public void should_accept_concurent_client() throws Exception {
         // Given
         CyclicBarrier barrier = new CyclicBarrier(3);
-        Client client1 = new Client("C1", barberShop, barrier);
-        Client client2 = new Client("C2", barberShop, barrier);
-        Client client3 = new Client("C3", barberShop, barrier);
+        Client client1 = new Client(barberShop, barrier);
+        Client client2 = new Client(barberShop, barrier);
+        Client client3 = new Client(barberShop, barrier);
+        Client client4 = new Client(barberShop, barrier);
+        Client client5 = new Client(barberShop, barrier);
+        Client client6 = new Client(barberShop, barrier);
+        new Thread(barber).start();
 
         Thread.sleep(50);
 
@@ -129,6 +135,10 @@ public class BarberShopTest {
         service.submit(client1);
         service.submit(client2);
         service.submit(client3);
+        Thread.sleep(200);
+        service.submit(client4);
+        service.submit(client5);
+        service.submit(client6);
         Thread.sleep(1000);
 
         // Then
@@ -137,30 +147,4 @@ public class BarberShopTest {
         assertThat(client3.hasHairCut()).isTrue();
     }
 
-    @Test
-    public void should_not_have_sleeping_barber_and_waiting_client() throws Exception {
-        // Given
-        CyclicBarrier barrier = new CyclicBarrier(2);
-        CyclicBarrier clientBarrier = new CyclicBarrier(2);
-        fr.boivina.sb.BarberShop barberShop = new fr.boivina.sb.BarberShop();
-        fr.boivina.sb.Barber barber = new fr.boivina.sb.Barber(barberShop, barrier);
-        barberShop.setBarber(barber);
-
-        Client client1 = new Client("C1", barberShop);
-        Client client2 = new Client("C2", barberShop, null, barrier);
-
-        Thread.sleep(50);
-
-        // When
-        ExecutorService service = Executors.newFixedThreadPool(2);
-        service.submit(client1,clientBarrier);
-        Thread.sleep(50);
-        barrier.await();
-        service.submit(client2,clientBarrier);
-        Thread.sleep(2000);
-
-        // Then
-        assertThat(client1.hasHairCut()).isTrue();
-        assertThat(client2.hasHairCut()).isTrue();
-    } */
 }
