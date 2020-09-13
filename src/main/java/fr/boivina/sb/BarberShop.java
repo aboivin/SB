@@ -3,49 +3,47 @@ package fr.boivina.sb;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.LinkedBlockingDeque;
+
 public class BarberShop {
 
     private static final Logger logger = LoggerFactory.getLogger(BarberShop.class);
 
-    private final Barber barber;
+    private final LinkedBlockingDeque<Client> waitingRoom;
+    private Client clientInCuttingChair;
 
-    private final WaitingRoom waitingRoom;
-
-    public BarberShop(Barber barber, WaitingRoom waitingRoom) {
-        this.barber = barber;
-        this.waitingRoom = waitingRoom;
+    public BarberShop(int waitingRoomCapacity) {
+        this.waitingRoom =  new LinkedBlockingDeque<>(waitingRoomCapacity);
     }
 
-    public void acceptNewClient(Client client) {
-        logger.debug("{} enter the shop.", client);
+    public synchronized void newClientVisit(Client client) {
+        logger.debug("[{}] entering the shop", client.id);
 
-        if (!newClientIsAccepted(client)) {
+        if (clientInCuttingChair != null && waitingRoom.remainingCapacity() == 0) {
+            logger.debug("[{}] Waiting room is full, leaving", client.id);
             return;
         }
-    }
 
-    private synchronized boolean newClientIsAccepted(Client client) {
-        if (waitingRoom.isFull()) {
-            logger.debug("Waiting room is full for client {}", client);
-            return false;
-        }
-
-        if (barber.isSleeping()) {
-            client.wakeUpBarber(barber);
+        if(clientInCuttingChair == null) {
+            logger.debug("[{}] entering the cutting chair", client.id);
+            clientInCuttingChair = client;
         } else {
-            waitingRoom.accept(client);
+            waitingRoom.addFirst(client);
+            logger.debug("[{}] entering the waiting room", client.id);
         }
-
-        return true;
+        this.notifyAll();
     }
 
-    public synchronized boolean anyClientWaiting() {
-        if(waitingRoom.isEmpty()) {
-            return false;
-        }
+    public boolean anyClientWaiting() {
+        return clientInCuttingChair != null || !waitingRoom.isEmpty();
+    }
 
-        Client nextClient = waitingRoom.nextClient();
-        barber.accept(nextClient);
-        return true;
+    public Client nextClient() {
+        if(clientInCuttingChair != null) {
+            Client nextClient = clientInCuttingChair;
+            clientInCuttingChair = null;
+            return nextClient;
+        }
+        return waitingRoom.pollLast();
     }
 }

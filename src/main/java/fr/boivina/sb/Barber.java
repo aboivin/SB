@@ -1,61 +1,44 @@
 package fr.boivina.sb;
 
-import static com.github.ylegat.uncheck.Uncheck.uncheck;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import static com.github.ylegat.uncheck.Uncheck.uncheck;
+import static java.lang.Thread.sleep;
+
 public class Barber implements Runnable {
 
-    private static final long SLEEP_TIME = 50L;
-    private static final long CUT_TIME = 50L;
     private final static Logger logger = LoggerFactory.getLogger(Barber.class);
+    private static final long CUT_TIME = 50L;
 
-    private boolean sleeping = true;
-    private Client client;
-    private ClientCounter clientCounter = new ClientCounter();
+    private Integer clientCounter = 0;
 
-    private BarberShop barberShop;
+    private final BarberShop barberShop;
 
-    public boolean isSleeping() {
-        return sleeping;
-    }
-
-    public void wakeUp() {
-        logger.info("Barber woken up !");
-        sleeping = false;
-    }
-
-    public void accept(Client client) {
-        this.client = client;
+    public Barber(BarberShop barberShop) {
+        this.barberShop = barberShop;
     }
 
     @Override
     public void run() {
         while (true) {
-            if (sleeping) {
-                logger.info("Barber is still sleeping.");
-                uncheck(() -> Thread.sleep(SLEEP_TIME));
-            } else {
-                work();
+            Client client;
+            synchronized(barberShop) {
+                if (!barberShop.anyClientWaiting()) {
+                    logger.info("[Barber] start sleeping...");
+                    uncheck(() -> barberShop.wait());
+                    logger.info("[Barber] woken up !");
+                }
+                client = barberShop.nextClient();
             }
-        }
-    }
-
-    private void work() {
-        cutHair(client);
-        if(!barberShop.anyClientWaiting()) {
-            sleeping = true;
+            cutHair(client);
         }
     }
 
     private void cutHair(Client client) {
-        logger.debug("Cutting hair of {}", client);
-        uncheck(() -> Thread.sleep(CUT_TIME));
-        client.cutHairWithOrder(clientCounter.getAndIncrement());
-        logger.info("Hair are cut for {}", client);
-    }
-
-    public void setBarberShop(BarberShop barberShop) {
-        this.barberShop = barberShop;
+        logger.debug("[{}] Hair being cut", client.id);
+        uncheck(() -> sleep(CUT_TIME));
+        client.cutHairWithOrder(clientCounter++);
+        logger.debug("[{}] Hair finished being cut", client.id);
     }
 }
